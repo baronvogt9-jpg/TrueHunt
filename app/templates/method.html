@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}How votes are weighed · TrueHunt{% endblock %}
+{% block body %}
+<section style="padding:32px 0;max-width:760px">
+  <h1 style="letter-spacing:-.02em">How votes are weighed</h1>
+  <p>NEAR Hunt lets any NEAR account upvote a project once. Accounts are free, so a raw count mostly shows how many accounts a team can mobilise. TrueHunt keeps every vote but gives it a weight from 0 to 1, using only public on-chain data. The first matching rule wins.</p>
+
+  <div class="card">
+  <table style="width:100%;border-collapse:collapse">
+    <tr><th style="text-align:left">Kind</th><th style="text-align:right">Weight</th><th style="text-align:left;padding-left:16px">When</th></tr>
+    <tr><td><span class="k k-maker">maker</span></td><td class="mono" style="text-align:right">{{ weights.maker }}</td><td style="padding-left:16px">The voter claimed the project as its maker on NEAR Hunt (a <span class="mono">maker/</span> row).</td></tr>
+    <tr><td><span class="k k-insider">insider</span></td><td class="mono" style="text-align:right">{{ weights.insider }}</td><td style="padding-left:16px">The voter's account name matches the project: its name, the builder's X handle, the GitHub owner or repo, or the demo's domain. Common words like "near", "agent" or "pay" never count as a match.</td></tr>
+    <tr><td><span class="k k-duplicate">duplicate</span></td><td class="mono" style="text-align:right">{{ weights.duplicate }}</td><td style="padding-left:16px">The same person already voted under another account with the same root name: <span class="mono">foo.near</span>, <span class="mono">foo.tg</span>, <span class="mono">team.foo.near</span>.</td></tr>
+    <tr><td><span class="k k-ring">ring</span></td><td class="mono" style="text-align:right">{{ weights.ring }}</td><td style="padding-left:16px">The voter makes another project, and the two projects are propped up together: this project's maker votes back, or the same third account upvotes both.</td></tr>
+    <tr><td><span class="k k-throwaway">throwaway</span></td><td class="mono" style="text-align:right">{{ weights.throwaway }}</td><td style="padding-left:16px">An auto-generated name like <span class="mono">quietfox2210.near</span>, or a bare 64-character implicit account.</td></tr>
+    <tr><td><span class="k k-independent">independent</span></td><td class="mono" style="text-align:right">{{ weights.independent }}</td><td style="padding-left:16px">None of the above.</td></tr>
+  </table>
+  </div>
+
+  <h2>What this is not</h2>
+  <p>It is not a judgment of the projects, and not the hackathon's official judging. A low score means the votes look like they come from the team's own side, not that the project is bad. The rules are deliberately simple so that anyone can check them, and they will miss some cases (an author whose account name shares nothing with the project) and flag some honest ones (a friend with an auto-generated name). If a weight looks wrong, the reason is printed next to the vote.</p>
+
+  <h2>Data</h2>
+  <p>Projects, votes, comments and maker claims are read from NEAR mainnet: FastData KV rows in the <span class="mono">nearhunt.near</span> namespace, the same records NEAR Hunt shows. Project records are accepted only when <span class="mono">nearhunt.near</span> wrote them; withdrawn votes are skipped. TrueHunt writes nothing on chain. The JSON API is described in <a href="/SKILL.md">SKILL.md</a>.</p>
+</section>
+{% endblock %}

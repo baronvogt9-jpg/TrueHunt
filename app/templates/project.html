@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ r.name }} · TrueHunt{% endblock %}
+{% block head %}
+<style>
+.head{padding:32px 0 16px}
+.head h1{margin:0 0 8px;font-size:30px;letter-spacing:-.02em}
+.grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start}
+.score{display:flex;gap:24px;margin:8px 0 4px}
+.score .n{font-size:32px;font-weight:700}
+.score .l{font-size:13px;color:var(--muted)}
+.votes{list-style:none;margin:0;padding:0}
+.votes li{display:flex;gap:10px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.votes li:last-child{border-bottom:0}
+.votes .acc{font-family:"JetBrains Mono",monospace;font-size:13px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.votes .w{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:13px}
+.links a{display:block;margin:4px 0;word-break:break-all}
+.desc{white-space:pre-wrap}
+button{font:inherit;background:var(--ink);color:var(--bg);border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
+button[disabled]{opacity:.5;cursor:default}
+.meter{display:inline-flex;gap:3px;vertical-align:middle}
+.meter i{width:14px;height:6px;border-radius:2px;background:var(--line)}
+.meter i.f{background:var(--accent)}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+{% block body %}
+<section class="head">
+  <a href="/" class="muted" style="text-decoration:none">← Leaderboard</a>
+  <h1>{{ r.name }}</h1>
+  {% for t in r.tracks or [] %}<span class="pill">{{ t }}</span>{% endfor %}
+  <div class="score">
+    <div><div class="n mono">{{ p.raw }}</div><div class="l">raw votes · #{{ rank_r }}</div></div>
+    <div><div class="n mono" style="color:var(--accent)">{{ p.honest }}</div><div class="l">honest votes · #{{ rank_h }} of {{ total }}</div></div>
+    <div><div class="n mono">{{ p.comments }}</div><div class="l">comments</div></div>
+  </div>
+</section>
+
+<div class="grid">
+  <div class="card">
+    <h3 style="margin-top:0">Who voted, and what each vote is worth</h3>
+    {% if p.votes %}
+    <ul class="votes">
+      {% for v in p.votes|sort(attribute='weight', reverse=True) %}
+      <li><span class="acc" title="{{ v.voter }}">{{ v.voter }}</span><span class="k k-{{ v.kind }}">{{ v.kind }}</span>
+        <span class="muted" style="font-size:13px">{{ v.reason }}</span><span class="w">{{ '%.1f'|format(v.weight) }}</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="muted">No upvotes yet. <a href="https://nearhunt.xyz/p/{{ p.pid }}">Be the first on NEAR Hunt</a>.</p>{% endif %}
+    {% if p.makers %}<p class="muted" style="font-size:13px;margin-bottom:0">Accounts we tie to this project: <span class="mono">{{ p.makers|sort|join(', ') }}</span></p>{% endif %}
+  </div>
+
+  <div>
+    <div class="card" id="ai">
+      <h3 style="margin-top:0">First five seconds</h3>
+      <p class="muted" style="font-size:13px">An AI reads only the public pitch and says what a newcomer still doesn't get.</p>
+      {% if ai_on %}<button id="go">Get the review</button>{% else %}<p class="muted">AI reviews are off on this deployment.</p>{% endif %}
+      <div id="out"></div>
+    </div>
+    <div class="card links" style="margin-top:16px">
+      <h3 style="margin-top:0">Links</h3>
+      {% if r.demo_url %}<a href="{{ r.demo_url }}" rel="noopener" target="_blank">Demo post</a>{% endif %}
+      {% if r.repository_url %}<a href="{{ r.repository_url }}" rel="noopener" target="_blank">{{ r.repository_url }}</a>{% else %}<span class="muted">No repository on record</span>{% endif %}
+      {% for l in r.links or [] %}{% if l.url %}<a href="{{ l.url }}" rel="noopener" target="_blank">{{ l.url }}</a>{% endif %}{% endfor %}
+      <a href="https://nearhunt.xyz/p/{{ p.pid }}" target="_blank" rel="noopener">Vote or comment on NEAR Hunt ↗</a>
+      <a href="/api/projects/{{ p.pid }}" class="mono" style="font-size:12px">/api/projects/{{ p.pid }}</a>
+    </div>
+  </div>
+</div>
+
+{% if r.description %}
+<div class="card" style="margin-top:16px"><h3 style="margin-top:0">The builder's pitch</h3><div class="desc">{{ r.description }}</div></div>
+{% endif %}
+
+<script>
+const btn = document.getElementById('go'), out = document.getElementById('out');
+function meter(n){ let s='<span class="meter">'; for(let i=1;i<=5;i++) s+=`<i class="${i<=n?'f':''}"></i>`; return s+'</span>'; }
+function esc(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+if (btn) btn.onclick = async () => {
+  btn.disabled = true; btn.textContent = 'Reading the pitch…';
+  try {
+    const r = await (await fetch('/api/projects/{{ p.pid }}/review', {method:'POST'})).json();
+    if (r.error) { out.innerHTML = `<p class="muted">${esc(r.error)}</p>`; btn.disabled=false; btn.textContent='Try again'; return; }
+    btn.remove();
+    out.innerHTML = `<p><b>${esc(r.one_liner)}</b></p>
+      <p>Clarity ${meter(r.clarity)} &nbsp; Proof ${meter(r.proof)}</p>
+      ${r.missing.length ? '<p class="muted" style="margin-bottom:4px">Missing for a newcomer:</p><ul>' + r.missing.map(m=>`<li>${esc(m)}</li>`).join('') + '</ul>' : ''}
+      ${r.best_line ? `<p class="muted" style="margin-bottom:4px">Strongest line:</p><blockquote style="margin:0;border-left:3px solid var(--accent);padding-left:10px">${esc(r.best_line)}</blockquote>` : ''}`;
+  } catch (e) { out.innerHTML = '<p class="muted">Review failed.</p>'; btn.disabled=false; btn.textContent='Try again'; }
+};
+</script>
+{% endblock %}

@@ -1,0 +1,1 @@
+"""TrueHunt web app."""

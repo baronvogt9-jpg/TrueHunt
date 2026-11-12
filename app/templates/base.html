@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}TrueHunt{% endblock %}</title>
+<meta name="description" content="The NEAR Hackathon leaderboard with self-votes, sock puppets and vote rings weighed out.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f7f5;--panel:#ffffff;--ink:#16181d;--muted:#6b7079;--line:#e4e4e0;
+  --accent:#00a66f;--accent-soft:#e3f6ee;--warn:#c2410c;--warn-soft:#fdeee5;--bad:#b91c1c;--bad-soft:#fde8e8;
+  --mid:#a16207;--mid-soft:#fdf4dc;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1114;--panel:#171a1f;--ink:#eceef1;--muted:#9097a1;--line:#272b32;
+  --accent:#2fd39a;--accent-soft:#11291f;--warn:#fb923c;--warn-soft:#2c1c12;--bad:#f87171;--bad-soft:#2d1515;
+  --mid:#facc15;--mid-soft:#2b2610;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+header.top{border-bottom:1px solid var(--line);background:var(--panel)}
+header.top .wrap{display:flex;align-items:center;gap:20px;height:56px}
+.logo{font-weight:700;text-decoration:none;letter-spacing:-.02em;font-size:18px}
+.logo b{color:var(--accent)}
+nav a{color:var(--muted);text-decoration:none;margin-right:16px;font-size:14px}
+nav a:hover{color:var(--ink)}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+.muted{color:var(--muted)}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;border:1px solid var(--line);font-size:12px;color:var(--muted);margin:0 4px 4px 0;text-decoration:none}
+.pill.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.k{display:inline-block;padding:1px 8px;border-radius:6px;font-size:12px;font-weight:600}
+.k-independent{background:var(--accent-soft);color:var(--accent)}
+.k-maker,.k-insider,.k-duplicate{background:var(--bad-soft);color:var(--bad)}
+.k-ring{background:var(--warn-soft);color:var(--warn)}
+.k-throwaway{background:var(--mid-soft);color:var(--mid)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+footer{color:var(--muted);font-size:13px;padding:40px 0}
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="/">True<b>Hunt</b></a>
+  <nav><a href="/">Leaderboard</a><a href="/method">How votes are weighed</a><a href="/SKILL.md">API</a></nav>
+</div></header>
+<main class="wrap">{% block body %}{% endblock %}</main>
+<footer class="wrap">
+  Reads NEAR Hunt's open records on NEAR mainnet (<span class="mono">nearhunt.near</span>, FastData KV). Source: {{ snap.source if snap else "mainnet" }}.
+  Weights are a heuristic, every one is explained next to the vote. Not affiliated with NEAR Hunt or the NEAR Hackathon judges.
+</footer>
+</body>
+</html>

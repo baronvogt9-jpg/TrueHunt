@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block head %}
+<style>
+.hero{padding:36px 0 20px}
+.hero h1{font-size:34px;line-height:1.15;letter-spacing:-.03em;margin:0 0 10px;max-width:760px}
+.hero p{margin:0;color:var(--muted);max-width:680px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat .n{font-size:26px;font-weight:700;letter-spacing:-.02em}
+.stat .l{font-size:13px;color:var(--muted)}
+.movers{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.mover{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-decoration:none}
+.mover .t{font-weight:600}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0 12px}
+.controls input{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 10px;font:inherit;min-width:220px}
+.seg a{padding:6px 12px;border:1px solid var(--line);text-decoration:none;font-size:13px;background:var(--panel)}
+.seg a:first-child{border-radius:8px 0 0 8px}.seg a:last-child{border-radius:0 8px 8px 0;border-left:0}
+.seg a.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+.name a{font-weight:600;text-decoration:none}
+.name a:hover{text-decoration:underline}
+.bar{position:relative;height:8px;background:var(--line);border-radius:99px;min-width:90px}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:99px}
+.rank{color:var(--muted);font-variant-numeric:tabular-nums}
+.delta-up{color:var(--accent)}.delta-down{color:var(--bad)}
+@media (max-width:720px){
+  .stats{grid-template-columns:repeat(2,1fr)}.movers{grid-template-columns:1fr}
+  .hide-m{display:none}.hero h1{font-size:26px}
+}
+</style>
+{% endblock %}
+{% block body %}
+<section class="hero">
+  <h1>{{ stats.raw_votes }} upvotes on the NEAR Hackathon leaderboard. {{ stats.honest_votes|round(1) }} of them are worth counting.</h1>
+  <p>Each vote is weighed by who cast it: a project's own accounts, sock puppets, auto-generated names and vote rings count for less or nothing. Every weight is explained next to the vote.</p>
+</section>
+
+<div class="stats">
+  <div class="stat"><div class="n">{{ stats.projects }}</div><div class="l">projects</div></div>
+  <div class="stat"><div class="n">{{ stats.with_votes }}</div><div class="l">with at least one vote</div></div>
+  <div class="stat"><div class="n">{{ stats.voters }}</div><div class="l">accounts voting</div></div>
+  <div class="stat"><div class="n">{{ (stats.by_kind.get('maker',0) + stats.by_kind.get('insider',0) + stats.by_kind.get('duplicate',0)) }}</div><div class="l">votes from the project's own side</div></div>
+</div>
+
+{% if movers %}
+<div class="movers">
+  {% for m in movers %}
+  <a class="mover" href="/p/{{ m.pid }}">
+    <div class="muted" style="font-size:12px">Biggest correction</div>
+    <div class="t">{{ m.record.name }}</div>
+    <div class="mono" style="font-size:13px">#{{ rr[m.pid] }} → #{{ rh[m.pid] }} · {{ m.raw }} → {{ m.honest }} votes</div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<form class="controls" method="get">
+  <span class="seg"><a href="?sort=honest&track={{ track }}&q={{ q }}&all={{ all }}" class="{{ 'on' if sort!='raw' }}">Honest</a><a href="?sort=raw&track={{ track }}&q={{ q }}&all={{ all }}" class="{{ 'on' if sort=='raw' }}">Raw</a></span>
+  <input type="search" name="q" value="{{ q }}" placeholder="Search projects">
+  <input type="hidden" name="sort" value="{{ sort }}"><input type="hidden" name="track" value="{{ track }}">
+  <a class="pill {{ 'on' if all }}" href="?sort={{ sort }}&track={{ track }}&all={{ 0 if all else 1 }}">{{ 'Only voted' if all else 'Show all ' ~ stats.projects }}</a>
+</form>
+<div style="margin-bottom:12px">
+  <a class="pill {{ 'on' if not track }}" href="?sort={{ sort }}&all={{ all }}">all tracks</a>
+  {% for t in tracks %}<a class="pill {{ 'on' if t==track }}" href="?sort={{ sort }}&track={{ t }}&all={{ all }}">{{ t }}</a>{% endfor %}
+</div>
+
+<table>
+  <thead><tr>
+    <th>#</th><th>Project</th><th class="hide-m">Tracks</th>
+    <th class="num">Raw</th><th class="num">Honest</th><th class="hide-m">Kept</th><th class="num hide-m">Move</th>
+  </tr></thead>
+  <tbody>
+  {% for p in rows %}
+    {% set d = rr[p.pid] - rh[p.pid] %}
+    <tr>
+      <td class="rank">{{ rh[p.pid] if sort!='raw' else rr[p.pid] }}</td>
+      <td class="name"><a href="/p/{{ p.pid }}">{{ p.record.name }}</a>
+        {% if p.self_share >= 0.5 %}<span class="k k-insider" title="Half or more of its votes come from its own side">self-voted</span>{% endif %}
+        {% if not p.record.repository_url %}<span class="muted" style="font-size:12px"> · no repo</span>{% endif %}
+      </td>
+      <td class="hide-m">{% for t in (p.record.tracks or [])[:3] %}<span class="pill">{{ t }}</span>{% endfor %}</td>
+      <td class="num mono">{{ p.raw }}</td>
+      <td class="num mono"><b>{{ p.honest }}</b></td>
+      <td class="hide-m"><div class="bar" title="{{ ((p.honest / p.raw * 100) if p.raw else 0)|round|int }}% kept"><i style="width:{{ ((p.honest / p.raw * 100) if p.raw else 0)|round|int }}%"></i></div></td>
+      <td class="num mono hide-m">{% if d > 0 %}<span class="delta-up">▲{{ d }}</span>{% elif d < 0 %}<span class="delta-down">▼{{ -d }}</span>{% else %}<span class="muted">·</span>{% endif %}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="7" class="muted">No projects match.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
