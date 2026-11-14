@@ -50,10 +50,6 @@ P = {
               demo_url="https://x.com/peter_obisi/status/2119013176310427661",
               repository_url="https://github.com/ZSP111/Heir",
               description="A will for your crypto that carries itself out."),
- "aishtat": dict(name="AI-Shtat Pay", tracks=["business","agents","realworld"],
-              demo_url="https://x.com/SyNNdicateHQ/status/2120667954056749496",
-              repository_url="https://github.com/Dengel88/NEARHACKATON",
-              description="An AI assistant that sells in chat in any language and takes any token on any chain."),
 }
 ID = {k: f"00000000-0000-4000-8000-{i:012d}" for i, k in enumerate(P, 1)}
 
@@ -70,7 +66,6 @@ V = {
  "settle": ["pgreyy.near","ofalamin.near","client47.near"],
  "ballast": ["ollie.near","alejandro.near","reviewer-n.near"],
  "heir": ["alejandro.near"],
- "aishtat": [],
 }
 rows = {"projects": [], "votes": [], "comments": [], "makers": []}
 h = 223600000

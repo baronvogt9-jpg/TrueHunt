@@ -15,7 +15,7 @@ from app.scoring import account_root, is_throwaway, link_match, project_identity
 
 ID = {k: f"00000000-0000-4000-8000-{i:012d}" for i, k in enumerate(
     ["nova", "yawrd", "portal", "nims", "safe", "crown", "skarbnik", "crucible", "settle",
-     "ballast", "heir", "aishtat"], 1)}
+     "ballast", "heir"], 1)}
 
 
 @pytest.fixture(scope="module")
